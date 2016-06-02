@@ -16,8 +16,44 @@ import config  from '../webpack.config.dev'
 
 const bundler = webpack(config);
 
-// For more Broswer-Sync recipes, visit https://github.com/BrowserSync/recipes
 browserSync({
+  notify: {
+    styles: {
+        top: 'auto',
+        bottom: '0',
+        padding: '1em',
+        position: 'fixed',
+        fontSize: '1.25em',
+        fontFamily: 'monospace',
+        zIndex: '9999999',
+        borderRadius: '1em 0em 0em 0em',
+        color: 'rgba(244, 244, 244, 1)',
+        textAlign: 'center',
+        display: 'block',
+        backgroundColor: 'rgba(87, 247, 93, 0.8)',
+        textShadow: '1px 1px 1px rgba(241, 99, 52, 0.9)'
+    }
+  },
+  ui: {
+      port: 3080,
+      weinre: {
+          port: 3081
+      }
+  },
+  port: 8001,
+  ghostMode: {
+      clicks: true,
+      forms: true,
+      scroll: true
+  },
+  logPrefix: 'Abyss',
+  logLevel: 'debug',
+  logConnections: true,
+  logFileChanges: true,
+  online: true,
+  reloadOnRestart: true,
+  scrollProportionally: true,
+  injectChanges: true,
   server: {
     baseDir: 'src',
     middleware: [
