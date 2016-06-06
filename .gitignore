@@ -37,3 +37,7 @@ dist
 
 # Mac files
 .DS_Store
+
+#CUSTOM ENV VARS
+.env
+#.env-config

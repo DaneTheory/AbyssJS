@@ -1,5 +1,5 @@
 import browserSync  from 'browser-sync'
-import chalk  from 'chalk'
+// import chalk  from 'chalk'
 import historyApiFallback  from 'connect-history-api-fallback'
 import gulp  from 'gulp'
 import autoprefixer  from 'gulp-autoprefixer'
@@ -13,32 +13,148 @@ import rename  from 'gulp-rename'
 import sass  from 'gulp-sass'
 import sourcemaps  from 'gulp-sourcemaps'
 import gutil  from 'gulp-util'
+// import logSymbols  from 'log-symbols'
 import notifier  from 'node-notifier'
 import webpack  from 'webpack'
 import webpackDevMiddleware  from 'webpack-dev-middleware'
 import webpackHotMiddleware  from 'webpack-hot-middleware'
 import config  from './webpack.config.dev'
+import { ConsoleConfigs } from './tools/console/ConsoleConfigs'
+import { AbyssInfo } from './tools/console/AbyssInfo'
+import DotEnv from 'dotenv'
+import nodemon from 'gulp-nodemon'
+import PrettyError from 'pretty-error'
+import GetPort from 'get-port'
+import Ipify from 'ipify'
+import InternalIp from 'internal-ip'
+// import spawn from 'child_process'
+import nodeInspector from 'gulp-node-inspector'
+const spawn = require('child_process').spawn
 
-// Instantiate Required Methods
-browserSync.create();
+DotEnv.config({path: './.env-config'})
+AbyssInfo()
+ConsoleConfigs()
+// const childProc = spawn
+const pe = PrettyError.start()
+
+pe.appendStyle({
+   // this is a simple selector to the element that says 'Error'
+   'pretty-error > header > title > kind': {
+      // which we can hide:
+      display: 'none'
+   },
+
+   // the 'colon' after 'Error':
+   'pretty-error > header > colon': {
+      // we hide that too:
+      display: 'none'
+   },
+
+   // our error message
+   'pretty-error > header > message': {
+      // let's change its color:
+      color: 'bright-white',
+
+      // we can use black, red, green, yellow, blue, magenta, cyan, white,
+      // grey, bright-red, bright-green, bright-yellow, bright-blue,
+      // bright-magenta, bright-cyan, and bright-white
+
+      // we can also change the background color:
+      background: 'cyan',
+
+      // it understands paddings too!
+      padding: '0 1' // top/bottom left/right
+   },
+
+   // each trace item ...
+   'pretty-error > trace > item': {
+      // ... can have a margin ...
+      marginLeft: 2,
+
+      // ... and a bullet character!
+      bullet: '"<grey>o</grey>"'
+
+      // Notes on bullets:
+      //
+      // The string inside the quotation mark gets used as the character
+      // to show for the bullet point.
+      //
+      // You can set its color/background color using tags.
+      //
+      // This example sets the background color to white, and the text color
+      // to cyan, the character will be a hyphen with a space character
+      // on each side:
+      // example: '"<bg-white><cyan> - </cyan></bg-white>"'
+      //
+      // Note that we should use a margin of 3, since the bullet will be
+      // 3 characters long.
+   },
+
+   'pretty-error > trace > item > header > pointer > file': {
+      color: 'bright-cyan'
+   },
+
+   'pretty-error > trace > item > header > pointer > colon': {
+      color: 'cyan'
+   },
+
+   'pretty-error > trace > item > header > pointer > line': {
+      color: 'bright-cyan'
+   },
+
+   'pretty-error > trace > item > header > what': {
+      color: 'bright-white'
+   },
+
+   'pretty-error > trace > item > footer > addr': {
+      display: 'none'
+   }
+})
+
+
+GetPort().then(port => {
+    console.log(port);
+})
+
+Ipify((err, ip) => {
+    console.log(ip);
+})
+
+console.log(`IPV6 ${InternalIp.v4()}`)
+
+console.log(`IPV6 ${InternalIp.v6()}`)
+
+// const monitor = nodemon(options);
+// process.once('SIGINT' ,() => {
+//   monitor.once('exit' ,() => {
+//     process.exit()
+//   })
+// })
+
+// process.once('SIGUSR2', function () {
+//   gracefulShutdown(function () {
+//     process.kill(process.pid, 'SIGUSR2');
+//   });
+// });
+
 
 // Define Required Variables
 const bundler = webpack(config),
       appPort = 8001,
       uiPort = 3000,
       weinrePort = 3001,
-      WP_INDEX_FILE = 'src/*.html',
-      WP_STYLESHEETS_MAIN_FILE = './src/stylesheets/*.scss',
-      WP_STYLESHEETS_ADDTIONAL_FILES = './src/stylesheets/*/*.scss',
-      stylesSrc = './src/stylesheets/styles.scss',
-      stylesDest = './src/public/styles',
-      mainStyleSheet = './src/stylesheets/*/*.scss',
-      tertiaryStyleSheets = './src/stylesheets/*/*.scss',
-      mainHTML = './src/*.html',
-      imagesSrc = './src/public/images/**/*.+(png|jpg|gif|svg)',
-      imagesDest = './src/public/images',
-      fontsSrc = './src/public/fonts/**/*',
-      fontsDest = './src/public/fonts';
+      WP_INDEX_FILE = `src/*.html`,
+      WP_STYLESHEETS_MAIN_FILE = `./src/stylesheets/*.scss`,
+      WP_STYLESHEETS_ADDTIONAL_FILES = `./src/stylesheets/*/*.scss`,
+      stylesSrc = `./src/stylesheets/styles.scss`,
+      stylesDest = `./src/public/styles`,
+      mainStyleSheet = `./src/stylesheets/*/*.scss`,
+      tertiaryStyleSheets = `./src/stylesheets/*/*.scss`,
+      mainHTML = `./src/*.html`,
+      imagesSrc = `./src/public/images/**/*.+(png|jpg|gif|svg)`,
+      imagesDest = `./src/public/images`,
+      fontsSrc = `./src/public/fonts/**/*`,
+      fontsDest = `./src/public/fonts`;
 
 // Error Function For Plumber
 const onError = function (err) {
@@ -47,42 +163,37 @@ const onError = function (err) {
   this.emit('end');
 };
 
-/*====================================================================================================================================
-    GULP TASKS
-----------------
-    **Task Names:
-      1) bs
-          Browser Sync for auto page reload on file change. This includes HTML, CSS as well as JS.
-          Hot Module Reloading enabled for Webpack Middleware.
-      2) styles
-          Enables SASS/SCSS compilation into CSS file served via index.html. Auto reloads on change via Browser Sync.
-          All CSS is autoprefixed and minified on change.
-      3) bs-reload
-          Default reload trigger for Browser Sync.
-      4) images
-         Optimizes images.
-      5) fonts
-         Copies Dev fonts to Prod folder.
-      6) default
-          Default Gulp Task Runs:
-            ['styles','bs']
-          Default Gulp Task Watches:
-            *)All files in stylesheets folder for changes, then runs ['styles'] if changes occur.
-            *)All .html files located within root directory (./src) for changes, then runs ['bs-reload'] if changes occur.
-=====================================================================================================================================*/
 
+/*--------------------------
+          GULP TASKS
+----------------------------*/
+gulp.task('default', ['styles','bs'], () => {
+  // const tasks = Object.keys(gulp.tasks).sort();
+  // gutil.log(gutil.colors.yellow(`List Of Available Gulp Tasks:`));
+  // tasks.forEach(t => {
+  //   if(t === 'default') return;
+  //     gutil.log(gutil.colors.yellow(`• gulp ${t}`));
+  // })
+  gulp.watch(tertiaryStyleSheets, ['styles']);
+  gulp.watch(mainStyleSheet, ['styles']);
+  gulp.watch(mainHTML, ['bs']);
+})
 
-// TASK: bs
+gulp.task('env', () => {
+  process.env.NODE_ENV === `development` ? browserSync.create() : gutil.noop();
+})
+
 // Browser Sync with Webpack as middleware. Hot Module Reloading enabled.
-gulp.task('bs', function(){
+gulp.task('bs', ['env'], () => {
   browserSync.init({
+    port: appPort,
     server: {
       baseDir: 'src',
       middleware: [
         webpackDevMiddleware(bundler, {
-          // For more options, visit http://webpack.github.io/docs/webpack-dev-middleware.html
           publicPath: config.output.publicPath,
           stats: { colors: true },
+          hot: true,
           noInfo: true, // Display no info to console (only warnings and errors). Default is false.
           quiet: false, // Display nothing to the console. Default is false.
           lazy: false // Lazy Mode. This means no watching, but recompilation on every request. Default is false.
@@ -115,30 +226,73 @@ gulp.task('bs', function(){
             port: weinrePort
         }
     },
-    port: appPort,
     ghostMode: {
         clicks: true,
         forms: true,
         scroll: true
     },
     logPrefix: 'Abyss',
-    logLevel: 'info', // Options: trace, debug, warn, info, error, silent. Order is from most verbose output to least.
-    logConnections: true,
+    logLevel: 'error', // Options: trace, debug, warn, info, error, silent. Order is from most verbose output to least.
+    logConnections: false,
     logFileChanges: true,
     online: true,
+    open: false,
     reloadOnRestart: true,
     scrollProportionally: true,
     injectChanges: true,
+    timestamps: false,
     files: [
       WP_INDEX_FILE,
       WP_STYLESHEETS_MAIN_FILE,
       WP_STYLESHEETS_ADDTIONAL_FILES
     ]
   })
-  notifier.notify({
-    'title': 'STATUS: READY!',
-    'message': 'Browser Connected To Browser-Sync'
+  // notifier.notify({
+  //   'title': 'STATUS: READY!',
+  //   'message': 'Browser Connected To Browser-Sync'
+  // })
+})
+
+
+gulp.task('nodemon', ['env'], (cb) => {
+  let called = false;
+  nodemon({
+    script: './server',
+    ext: '.js',
+    watch: ['./server.js'],
+    ignore: [
+      `node_modules/**/*.js`,
+    ],
+    debug: true,
+    // env: process.env.NODE_ENV === `development` ? process.env.NODE_ENV : DotEnv.config({path: './.env-config'}),
+  }).on('start', () => {
+    if (!called) {
+      called = true;
+      cb();
+    }
+  }).on('restart', () => {
+    setTimeout(() => {
+      browserSync.reload({ stream: false });
+    }, 500)
+  }).on('error', (err) => {
+    throw err;
   })
+})
+
+gulp.task('debug', function () {
+    gulp.src([])
+        .pipe(nodeInspector({
+            debugPort: 5858,
+            webHost: '0.0.0.0',
+            webPort: 8080,
+            saveLiveEdit: true,
+            preload: true,
+            inject: true,
+            hidden: [],
+            stackTraceLimit: 50,
+            sslKey: '',
+            sslCert: ''
+        }));
 });
 
 
@@ -197,38 +351,30 @@ gulp.task('fonts', function() {
 
 // CUSTOM CONSOLE MESSAGE ON BUILD
 // TODO: Make This Easier TO Scale. As Of Now, It Exists As POC.
-const chalkSuccess = chalk.white.bold.bgBlue,
-      chalkInfo = chalk.white.bold.bgBlue,
-      chalkMainMsgStr = chalk.white.bold.underline,
-      chalkEndMsgStr = chalk.grey,
-      chalkAccessMsgStr = chalk.yellow,
-      chalkDev = chalk.cyan.bold,
-      chalkLine = chalk.magenta.bold;
-const mainMsgOutputStr = chalkMainMsgStr('RUNNING IN'),
-      devMode = chalkDev('DEV'),
-      mainMsgOutput = mainMsgOutputStr + ': ' + devMode,
-      accessMsgOutputStrOne = chalkAccessMsgStr('URL For Local Viewing:'),
-      localURL = chalkDev('http://localhost:'+appPort),
-      accessMsgOutputOne = accessMsgOutputStrOne + ' ' + localURL,
-      accessMsgOutputStrTwo = chalkAccessMsgStr('URL For Viewing Browser Sync UI:'),
-      externalURL = chalkDev('http://localhost:'+uiPort),
-      accessMsgOutputTwo = accessMsgOutputStrTwo + ' ' + externalURL,
-      endMsgOutput = chalkEndMsgStr('For More Dev Features, update Browser-Sync\'s "logLevel" option');
+// const chalkSuccess = chalk.white.bold.bgBlue,
+//       chalkInfo = chalk.white.bold.bgBlue,
+//       chalkMainMsgStr = chalk.white.bold.underline,
+//       chalkEndMsgStr = chalk.grey,
+//       chalkAccessMsgStr = chalk.yellow,
+//       chalkDev = chalk.cyan.bold,
+//       chalkLine = chalk.magenta.bold;
+// const mainMsgOutputStr = chalkMainMsgStr('RUNNING IN'),
+//       devMode = chalkDev('DEV'),
+//       mainMsgOutput = mainMsgOutputStr + ': ' + devMode,
+//       accessMsgOutputStrOne = chalkAccessMsgStr('URL For Local Viewing:'),
+//       localURL = chalkDev('http://localhost:'+appPort),
+//       accessMsgOutputOne = accessMsgOutputStrOne + ' ' + localURL,
+//       accessMsgOutputStrTwo = chalkAccessMsgStr('URL For Viewing Browser Sync UI:'),
+//       externalURL = chalkDev('http://localhost:'+uiPort),
+//       accessMsgOutputTwo = accessMsgOutputStrTwo + ' ' + externalURL,
+//       endMsgOutput = chalkEndMsgStr('For More Dev Features, update Browser-Sync\'s "logLevel" option');
 
 
-
-// TASK default
-// Default Gulp Task. Depends on 'styles' task and 'bs' task to run first.
-gulp.task('default', ['styles','bs'], function () {
-     console.log(chalkLine('------------------------------------------------------------------------------'))
-  console.log(chalkSuccess('                                                                              '))
-  console.log(chalkSuccess('                          '+mainMsgOutput+'                                     '))
-     console.log(chalkInfo('             '+accessMsgOutputOne+'                     '))
-  console.log(chalkSuccess('             '+accessMsgOutputTwo+'           '))
-  console.log(chalkSuccess('                                                                              '))
-  console.log(chalkSuccess('         '+endMsgOutput+'       '))
-     console.log(chalkLine('------------------------------------------------------------------------------'))
-  gulp.watch(tertiaryStyleSheets, ['styles']);
-  gulp.watch(mainStyleSheet, ['styles']);
-  gulp.watch(mainHTML, ['bs']);
-});
+  //    console.log(chalkLine('------------------------------------------------------------------------------'))
+  // console.log(chalkSuccess('                                                                              '))
+  // console.log(chalkSuccess('                          '+mainMsgOutput+'                                     '))
+  //    console.log(chalkInfo('             '+accessMsgOutputOne+'                     '))
+  // console.log(chalkSuccess('             '+accessMsgOutputTwo+'           '))
+  // console.log(chalkSuccess('                                                                              '))
+  // console.log(chalkSuccess('         '+endMsgOutput+'       '))
+  //    console.log(chalkLine('------------------------------------------------------------------------------'))
